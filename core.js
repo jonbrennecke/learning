@@ -1,12 +1,18 @@
-var Raw = Raw || { META:"3D Effects namespace" };
+/** 
+ * Copyright 2014 Jon Brennecke
+ * Released under the MIT license.
+ *
+ */
 
-Raw.Vector3D = function(x,y,z){
+var R = R || {};
+
+R.Vector3D = function(x,y,z){
 	this.x = x || 0;
 	this.y = y || 0;
 	this.z = z || 0;
 };
 
-Raw.Vector3D.prototype = {
+R.Vector3D.prototype = {
 	set : function(v) {
 		this.x = v.x;
 		this.y = v.y;
@@ -14,7 +20,7 @@ Raw.Vector3D.prototype = {
 	},
 
 	// find the vector projection in the direction of v 
-	proj : function(v){ return new Raw.Vector3D(v.x - this.x, v.y - this.y, v.z - this.z) }, // TODO rename!!!
+	proj : function(v){ return new R.Vector3D(v.x - this.x, v.y - this.y, v.z - this.z) }, // TODO rename!!!
     
     norm : function(){ return Math.sqrt(this.x*this.x + this.y*this.y + this.z*this.z) },
 	
@@ -27,17 +33,17 @@ Raw.Vector3D.prototype = {
 
 	// subtract a vector 'v' from the vector 
 	sub : function(v){
-		return new Raw.Vector3D(this.x - v.x, this.y - v.y, this.z - v.z);
+		return new R.Vector3D(this.x - v.x, this.y - v.y, this.z - v.z);
 	},
 
 	// add a vector 'v' to the vector
 	add : function(v){
-		return new Raw.Vector3D(this.x + v.x, this.y + v.y, this.z + v.z);
+		return new R.Vector3D(this.x + v.x, this.y + v.y, this.z + v.z);
 	},
 
 	// multiply components of the vector by a scalar 's'
 	multiply : function(s){
-		return new Raw.Vector3D(this.x * s, this.y * s, this.z * s);
+		return new R.Vector3D(this.x * s, this.y * s, this.z * s);
 	},
 
 	dot : function(v){
@@ -45,17 +51,17 @@ Raw.Vector3D.prototype = {
 	},
 	
 	cross : function(v){
-	    return new Raw.Vector3D (
+	    return new R.Vector3D (
 		    this.y * v.z - this.z * v.y,
 		    this.z * v.x - this.x * v.z,
 		    this.x * v.y - this.y * v.x);
 	}
 };
 
-Raw.Object3D = function( position ){
+R.Object3D = function( position ){
 	this.position = position;
 };
 
-Raw.Object3D.prototype = {
+R.Object3D.prototype = {
 
 };
