@@ -1,17 +1,17 @@
 /**
- *
  * A set of unified color classes
  *
  * by @jonbrennecke
- *
  */
 R.clr = R.clr || {};
 
+// TODO add rgba / hsva
 
-R.clr.rgb = function(rgb) {
-	this.r = rgb.r || 0;
-	this.g = rgb.g || 0;
-	this.b = rgb.b || 0;
+
+R.clr.rgb = function(r,g,b) {
+	this.r = r || 0;
+	this.g = g || 0;
+	this.b = b || 0;
 };
 
 R.clr.rgb.prototype = {
@@ -23,15 +23,15 @@ R.clr.rgb.prototype = {
 	 * @return { R.clr.hsv } - hsv object
 	 */
 	toHSV : function() {
-		var rgb = { r : this.r/255, g : this.g/255, b : this.b/255 },
-		max = Math.max(rgb.r, Math.max(rgb.g, rgb.b ) ),
-		min = Math.min(rgb.r, Math.min(rgb.g, rgb.b ) ),
+		var r = this.r / 255, g = this.g / 255, b = this.b / 255,
+		max = Math.max(r, Math.max( g, b ) ),
+		min = Math.min(r, Math.min( g, b ) ),
 		chroma = max - min;
 		if(chroma === 0) var hprime = 0;
-		else if(max === rgb.r) var hprime = ((rgb.g-rgb.b)/chroma)%6;
-		else if(max === rgb.g) var hprime = ((rgb.b-rgb.r)/chroma)+2;
-		else if(max === rgb.b) var hprime = ((rgb.r-rgb.g)/chroma)+4;
-		return new R.clr.hsv( { h : ~~(60*hprime), s : ~~((chroma ? (chroma/max) : 0)*100), v : ~~(max*100) } );
+		else if( max === r ) var hprime = (( g - b ) / chroma) % 6;
+		else if( max === g ) var hprime = (( b - r ) / chroma) + 2;
+		else if( max === b ) var hprime = (( r - g ) / chroma) + 4;
+		return new R.clr.hsv( ~~(60*hprime), ~~((chroma ? (chroma/max) : 0)*100), ~~(max*100) );
 	},
 
 	/**
@@ -49,10 +49,10 @@ R.clr.rgb.prototype = {
 	}
 };
 
-R.clr.hsv = function(hsv) {
-	this.h = hsv.h || 0;
-	this.s = hsv.s || 0;
-	this.v = hsv.v || 0;
+R.clr.hsv = function(h,s,v) {
+	this.h = h || 0;
+	this.s = s || 0;
+	this.v = v || 0;
 };
 
 R.clr.hsv.prototype = {
@@ -76,7 +76,7 @@ R.clr.hsv.prototype = {
 		else if(hprime >= 5 && hprime < 6) var rgb = { r : chroma, g : 0, b : x };
 		else var rgb = { r : 0, g : 0, b : 0 };
 		rgb.r = ~~((rgb.r+m)*255); rgb.g = ~~((rgb.g+m)*255); rgb.b = ~~((rgb.b+m)*255);
-		return new R.clr.rgb(rgb);
+		return new R.clr.rgb( rgb.r, rgb.g, rgb.b );
 	},
 
 	/**
@@ -112,12 +112,7 @@ R.clr.hex.prototype = {
 	 */
 	toRGB : function() {
 		var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(this.value);
-	    var rgb = result ? {
-	        r: parseInt(result[1], 16),
-	        g: parseInt(result[2], 16),
-	        b: parseInt(result[3], 16)
-	    } : null;
-	    return new R.clr.rgb(rgb);
+	    return result ? new R.clr.rgb( parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16) ) : null
 	},
 
 	/**
