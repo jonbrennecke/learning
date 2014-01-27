@@ -3,24 +3,24 @@
  *
  * by @jonbrennecke
  */
-rjs.clr = rjs.clr || {};
+Blue.clr = Blue.clr || {};
 
 // TODO add rgba / hsva
 
 
-rjs.clr.rgb = function(r,g,b) {
+Blue.clr.rgb = function(r,g,b) {
 	this.r = r || 0;
 	this.g = g || 0;
 	this.b = b || 0;
 };
 
-rjs.clr.rgb.prototype = {
+Blue.clr.rgb.prototype = {
 
 	/**
 	 * Convert rgb to hsv
 	 *
 	 * @see http://en.wikipedia.org/wiki/HSL_and_hsv#General_approach
-	 * @return { rjs.clr.hsv } - hsv object
+	 * @return { Blue.clr.hsv } - hsv object
 	 */
 	toHSV : function() {
 		var r = this.r / 255, g = this.g / 255, b = this.b / 255,
@@ -31,13 +31,13 @@ rjs.clr.rgb.prototype = {
 		else if( max === r ) var hprime = (( g - b ) / chroma) % 6;
 		else if( max === g ) var hprime = (( b - r ) / chroma) + 2;
 		else if( max === b ) var hprime = (( r - g ) / chroma) + 4;
-		return new rjs.clr.hsv( ~~(60*hprime), ~~((chroma ? (chroma/max) : 0)*100), ~~(max*100) );
+		return new Blue.clr.hsv( ~~(60*hprime), ~~((chroma ? (chroma/max) : 0)*100), ~~(max*100) );
 	},
 
 	/**
 	 * Convert rgb to hex
 	 *
-	 * @return { rjs.clr.hex } - hex object
+	 * @return { Blue.clr.hex } - hex object
 	 */
 	toHex : function() {
 		var hex = "#";
@@ -45,25 +45,25 @@ rjs.clr.rgb.prototype = {
 			var component = (~~val).toString(16);
 			hex = hex + ( component.length == 1 ? "0" + component : component );
 		});
-		return new rjs.clr.hex(hex);
+		return new Blue.clr.hex(hex);
 	}
 };
 
-rjs.clr.hsv = function(h,s,v) {
+Blue.clr.hsv = function(h,s,v) {
 	this.h = h || 0;
 	this.s = s || 0;
 	this.v = v || 0;
 };
 
-rjs.clr.hsv.prototype = {
+Blue.clr.hsv.prototype = {
 
 	/**
 	 * Convert hsv to rgb
 	 *
 	 * @see http://en.wikipedia.org/wiki/HSL_and_hsv#General_approach
-	 * @return { rjs.clr.rgb } - rgb object
+	 * @return { Blue.clr.rgb } - rgb object
 	 */
-	torjsGB : function() {
+	toBlueGB : function() {
 		var chroma = this.v * this.s,
 			hprime = this.h/60,
 			x = chroma*(1 - Math.abs(hprime%2 - 1)),
@@ -76,54 +76,54 @@ rjs.clr.hsv.prototype = {
 		else if(hprime >= 5 && hprime < 6) var rgb = { r : chroma, g : 0, b : x };
 		else var rgb = { r : 0, g : 0, b : 0 };
 		rgb.r = ~~((rgb.r+m)*255); rgb.g = ~~((rgb.g+m)*255); rgb.b = ~~((rgb.b+m)*255);
-		return new rjs.clr.rgb( rgb.r, rgb.g, rgb.b );
+		return new Blue.clr.rgb( rgb.r, rgb.g, rgb.b );
 	},
 
 	/**
 	 * Convert hsv to hex
 	 *
-	 * @return { rjs.clr.hex } - hex object
+	 * @return { Blue.clr.hex } - hex object
 	 */
 	toHex : function() {
-		return this.torjsGB().toHex();
+		return this.toBlueGB().toHex();
 	}
 };
 
-rjs.clr.hex = function(value) {
+Blue.clr.hex = function(value) {
 	// validate hex
 	var test = /(^#[0-9A-F]{6}$)|(^#[0-9A-F]{3}$)/i.test(value);
 	this.value = test ? value : "#ffffff";
 };
 
-rjs.clr.hex.prototype = {
+Blue.clr.hex.prototype = {
 	/**
 	 * Convert hex to hsv
 	 *
-	 * @return { rjs.clr.hsv } - hsv object
+	 * @return { Blue.clr.hsv } - hsv object
 	 */
 	toHSV : function() {
-		return this.torjsGB().toHSV();
+		return this.toBlueGB().toHSV();
 	},
 
 	/**
 	 * Convert hex to rgb
 	 *
-	 * @return { rjs.clr.rgb } - rgb object
+	 * @return { Blue.clr.rgb } - rgb object
 	 */
-	torjsGB : function() {
+	toBlueGB : function() {
 		var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(this.value);
-	    return result ? new rjs.clr.rgb( parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16) ) : null
+	    return result ? new Blue.clr.rgb( parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16) ) : null
 	},
 
 	/**
 	 * Invert the hex's color
 	 *
-	 * @return { rjs.clr.hex } - a new hex object with inverted color
+	 * @return { Blue.clr.hex } - a new hex object with inverted color
 	 */
 	invert : function() {
 		var invertHex = (0xFFFFFF ^ (~~('0x' + this.value.split("#")[1]))).toString(16);         
 	    invertHex = ("000000" + invertHex).slice(-6); 
 	    invertHex = "#" + invertHex;                
-	    return new rjs.clr.hex(invertHex);
+	    return new Blue.clr.hex(invertHex);
 	}
 };

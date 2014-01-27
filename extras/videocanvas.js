@@ -64,6 +64,7 @@ Blue.VideoCanvas.prototype = {
 		// draw from the html '<video>' element to the canvas
 		this.ctx.drawImage(this.video,0,0,this.c.width,this.c.height);
 
+		// get the ImageData array back from the canvas
 		var frame = this.ctx.getImageData(0,0,this.c.width,this.c.height);
 
 	    var newimg = this.ctx.createImageData(this.c.width,this.c.height);
