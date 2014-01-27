@@ -8,7 +8,7 @@
  * @param position { Vector3D } - position of the sphere's center
  * @param n { Number } - the number of points to be generated
  */
-rjs.HammersleySphere = function( radius, position, n ){
+Blue.HammersleySphere = function( radius, position, n ){
 	this.position = position;
 	this.radius = radius;
 	this.verts = [];
@@ -25,7 +25,7 @@ rjs.HammersleySphere = function( radius, position, n ){
 		phiLast = phi;
 
 		// convert back to cartesian coordinates and scale from (-1,1) to (pos-radius,pos+radius)
-		this.verts.push( new rjs.Vector3D( 
+		this.verts.push( new Blue.Vector3D( 
 			this.position.x + radius * Math.sin( phi ) * Math.sin( theta ),
 			this.position.y + radius * Math.cos( theta ),
 			this.position.z + radius * Math.cos( phi ) * Math.sin( theta )

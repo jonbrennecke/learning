@@ -3,17 +3,17 @@
  * Camera3D object
  *
  */
-rjs.Camera3D = function (pos,at,zoom) {
-	this.position = pos || new rjs.Vector3D();
-	this.at = at || new rjs.Vector3D();
-	this.up = new rjs.Vector3D(0,1,0);
+Blue.Camera3D = function (pos,at,zoom) {
+	this.position = pos || new Blue.Vector3D();
+	this.at = at || new Blue.Vector3D();
+	this.up = new Blue.Vector3D(0,1,0);
     if(pos) this.setPosition(pos.x,pos.y,pos.z);
     if(at) this.lookAt(at);
 	this.zoom = zoom || 1;
 	this.fov = 50;
 };
 
-rjs.Camera3D.prototype = {
+Blue.Camera3D.prototype = {
     _updateMatrix: function ()
 	{
 	    this.z = this.at.proj(this.position);
@@ -41,7 +41,7 @@ rjs.Camera3D.prototype = {
 	        z = this.z.x * u + this.z.y * v + this.z.z * w;
 		
 		// apply projection & shift to fit viewport
-		return new rjs.Vector3D(this.at.x + this.fov * x/z, this.at.y + this.fov * y/z, 1 );
+		return new Blue.Vector3D(this.at.x + this.fov * x/z, this.at.y + this.fov * y/z, 1 );
 	},
 	
 	setX : function(v) { this.position.x = v; this._updateMatrix(); },
@@ -50,7 +50,7 @@ rjs.Camera3D.prototype = {
 	zoomify : function(z) { this.zoom = z; this._updateMatrix(); },
 	
     setPosition: function(x,y,z) {
-		this.position.set(new rjs.Vector3D(x,y,z));
+		this.position.set(new Blue.Vector3D(x,y,z));
 		this._updateMatrix();
 	},
 
@@ -68,21 +68,21 @@ rjs.Camera3D.prototype = {
 	},
 
 	rotateX : function(){
-		var v = new rjs.Vector3D(1,0,0);
+		var v = new Blue.Vector3D(1,0,0);
 		return function(angle){
 			return this.rotateOnAxis(v,angle);
 		};
 	}(),
 
 	rotateY : function(){
-		var v = new rjs.Vector3D(0,1,0);
+		var v = new Blue.Vector3D(0,1,0);
 		return function(angle){
 			return this.rotateOnAxis(v,angle);
 		};
 	}(),
 
 	rotateZ : function(){
-		var v = new rjs.Vector3D(0,0,1);
+		var v = new Blue.Vector3D(0,0,1);
 		return function(angle){
 			return this.rotateOnAxis(v,angle);
 		};
@@ -115,7 +115,7 @@ rjs.Camera3D.prototype = {
 	},
 
 	perspectiveOrigin : function(x,y) {
-		this.position.set(new rjs.Vector3D( x, y, this.position.z ) )
+		this.position.set(new Blue.Vector3D( x, y, this.position.z ) )
 		this._updateMatrix();
 	},
 
