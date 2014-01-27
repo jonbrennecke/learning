@@ -1,3 +1,8 @@
+/**
+ *
+ * 
+ *
+ */
 Blue.VideoCanvas = function(){
 
 	this.c = document.createElement('canvas');
@@ -10,8 +15,8 @@ Blue.VideoCanvas = function(){
 	var attributes = {
 		id: '',
 		'class' : '',
-		width: '640',
-		height : '480',
+		width: 640,
+		height : 480,
 		controls : false,
 		autoplay : false,
 		preload : true,
@@ -28,14 +33,10 @@ Blue.VideoCanvas = function(){
 
 		this.video.oncanplay = function(){
 			this.video.play()
-			this.ctx.drawImage(this.video,0,0,c.width,c.height);
-			var frame = this.ctx.getImageData(0,0,c.width,c.height);
+			this.ctx.drawImage(this.video,0,0,this.c.width,this.c.height);
+			var frame = this.ctx.getImageData(0,0,this.c.width,this.c.height);
 			
-			if( this.video.paused || this.video.ended ) return;
-				// this.computeFrame();
-				window.requestAnimationFrame( function(){
-					// this.getFrame();
-				} );
+			this.getFrame( this.computeFrame() );
 
 		}.bind(this);
 	}.bind(this);
@@ -46,4 +47,16 @@ Blue.VideoCanvas = function(){
 
 Blue.VideoCanvas.prototype = {
 
+	constructor : Blue.VideoCanvas,
+
+	getFrame : function( callback ){
+		if( this.video.paused || this.video.ended ) return;
+		window.requestAnimationFrame( function(){
+			this.getFrame( callback );
+		}.bind(this) );
+	},
+
+	computeFrame : function(){
+		
+	}
 };
