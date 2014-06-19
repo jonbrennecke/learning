@@ -1,0 +1,19 @@
+{
+  "name": "blueprint.js",
+  "version": "0.0.1",
+  "description": "blueprint.js ======",
+  "main": "blue.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/jonbrennecke/blueprint.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jonbrennecke/blueprint.js/issues"
+  },
+  "homepage": "https://github.com/jonbrennecke/blueprint.js"
+}
