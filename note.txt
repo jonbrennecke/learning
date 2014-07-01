@@ -1,0 +1,6 @@
+symbols (alphabet) -> a symbol in the set [R,W,S,X]
+states -> continuous domain
+	Could use ANN to classify as one of X states?
+transitions -> probabilities of transitioning between states
+outputs -> probability of outputting symbol X when in state Y
+priors -> initial state distribution (probability of starting in state S)

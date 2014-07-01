@@ -1,0 +1,12 @@
+/**
+ *
+ *
+ *
+ */
+function SelfOrganizingMap () {
+
+};
+
+SelfOrganizingMap.prototype = {
+
+};
