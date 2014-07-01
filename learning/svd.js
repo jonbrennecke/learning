@@ -11,17 +11,17 @@ var linalg = require( __dirname + "/../linalg/linalg"),
  */
 function svd ( A ) {
 
-	// return this.lanczos( A, 8 );
+	console.log(lanczos( A, 1 ).toArray().join(',\n'))
 
-	var m = 8;
+	// var m = 4;
 
- 	// tmp
-	var a = linalg.ndarray([1,m],2)[0]
-	var b = linalg.ndarray([1,m],-1)[0];
+ // 	// tmp
+	// var a = linalg.ndarray([1,m],1)[0]
+	// var b = linalg.ndarray([1,m],2)[0];
 
-	b[0] = 0;
+	// b[0] = 0;
 
-	bisectTridiagonal( a, b, m );
+	// bisectTridiagonal( a, b, m );
 
 };
 
@@ -89,11 +89,35 @@ function lanczos ( A, m, reortho ) {
 
 
 /**
+ *
+ * Multiple Relatively Robust Representations Algorithm
+ * --
+ * http://web.eecs.utk.edu/~dongarra/etemplates/node93.html
+ *
+ */
+function mrrr ( M ) {
+
+}
+
+// http://zoro.ee.ncku.edu.tw/na/res/10-QR_factorization.pdf
+function qr ( A ) {
+
+}
+
+function eigensolveQr ( A, n ) {
+	for (var i = 0; i < n; i++) {
+		
+	};
+}
+
+
+/**
  * Find the eigenvalues of a tridiagonalized matrix by bisection
  * --
  * see:
  * 		- https://people.fh-landshut.de/~maurer/numeth/node91.html#GBNDMIN
  * 		- http://www.enggjournals.com/ijcse/doc/IJCSE11-03-12-060.pdf
+ *		- http://www.maths.ed.ac.uk/~aar/papers/bamawi.pdf
  *
  */
 function bisectTridiagonal ( a, b, m ) {
@@ -112,21 +136,21 @@ function bisectTridiagonal ( a, b, m ) {
 		return i ? Math.max(tmp,prev) : tmp
 	},0);
 
-	var numEig = 5;
+	var numEig = 1;
 
 	// numerical tolerance 10e-7
-	var epsilon = 1e-7 * Math.max( Math.abs(umin), Math.abs(umax) );
 
 	do {
-		var s = ( umin + umax ) * 0.5, 
+		var epsilon = 1e-7 * Math.max( Math.abs(umin), Math.abs(umax) ),
+			s = ( umin + umax ) * 0.5, 
 			d = a[0] - s, 
 			lneg = 0;
 
 		// triangular decomposition
 		for (var i = 1; i < m; i++) {
-			lneg += (( b[i] / ( d || epsilon )) < 0) ? 1 : 0;
-			d = a[i] - s - (b[i]*b[i])/d;
-			// console.log(lneg)
+			lneg += d < 0 ? 1 : 0;
+			// lneg += (( b[i] / ( d || epsilon )) < 0) ? 1 : 0;
+			d = a[i] - s - (b[i]*b[i])/( d || epsilon );
 		}
 
 		console.log(umin,s,umax,lneg)
