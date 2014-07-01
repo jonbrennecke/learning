@@ -100,11 +100,21 @@ function mrrr ( M ) {
 }
 
 // http://zoro.ee.ncku.edu.tw/na/res/10-QR_factorization.pdf
+// http://stats.stackexchange.com/questions/20643/finding-matrix-eigenvectors-using-qr-decomposition
 function qr ( A ) {
 
 }
 
+function qrFactorize ( A ) {
+	// [[3,2,0],[2,-5,-1],[0,-1,4]]
+	
+}
+
+
 function eigensolveQr ( A, n ) {
+
+
+
 	for (var i = 0; i < n; i++) {
 		
 	};
