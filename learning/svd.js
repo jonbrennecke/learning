@@ -1,179 +1,158 @@
-
-var linalg = require( __dirname + "/../linalg/linalg"),
-	_ = require('underscore');
-
-/**
+/** 
+ * Copyright 2014 Jon Brennecke
+ * Released under the MIT license.
  *
- * compute the SVD (Singular Value Decomposition) of a matrix A
  *
- * see http://arxiv.org/abs/1007.5510
  *
- */
-function svd ( A ) {
-
-	console.log(lanczos( A, 1 ).toArray().join(',\n'))
-
-	// var m = 4;
-
- // 	// tmp
-	// var a = linalg.ndarray([1,m],1)[0]
-	// var b = linalg.ndarray([1,m],2)[0];
-
-	// b[0] = 0;
-
-	// bisectTridiagonal( a, b, m );
-
-};
-
-
-/**
- *
- * reduces a matrix A to hessenberg form by a series of Householder reflections
- *
- */
-
-
-/**
- * Lanczos Algorithm
+ * SVD (Singular Value Decomposition)
  * ---
- * finds the eigenvectors/values of a square matrix 'A', or the Singular Value Decomposition (SVD) of 
- * a rectangular matrix 'A'
- *
+ * compute the SVD (Singular Value Decomposition) of a matrix A, 
+ * which is the same as finding the eigenvalues of the tridiagonalized
+ * symmetric matrix T, constructed by the Lanczos algorithm. 
+ * ---
  * see 
- *		- http://en.wikipedia.org/wiki/Lanczos_iteration
  *		- http://en.wikipedia.org/wiki/Singular_value_decomposition
- *		- http://bickson.blogspot.com/2011/10/lanczos-algorithm-for-svd-singule-value.html
- *
- * :param A - a square or rectangular matrix
- * :param m - the number of iterations; the number size of the tridiagonalized matrix T
- * :param reortho - boolean value for whether or not to run reorthogonalization (defaults to true)
- */
-function lanczos ( A, m, reortho ) {
-
-	var v = [ linalg.zeros(A.cols), linalg.rand(A.cols)],
-		b = [0,0], w, a = [0],
-		T = linalg.zeros([m,m]),
-		At = A.clone().T();
-
-	// start with norm(v[1]) = 1
-	v[1] = v[1].div( v[1].norm() );
-
-	for (var i = 1; i < m + 1; i++) {
-		w = At.mul( A.mul(v[i]) ).sub( v[i-1].mul(b[i]) );
-		a.push( w.dot( v[i]) );
-		w = w.sub( v[i].mul(a[i]) );
-
-		// re-orthogonalize at each iteration (if specified)
-		if ( reortho || _.isUndefined(reortho) ) {
-			for (var j = 1; j < i-1; j++) {
-				tmpa = w.dot(v[j]);
-				w = w.sub( v[j].mul(tmpa) );
-			};
-		}
-		
-		b.push( w.norm() );
-		v.push( w.div(b[i+1]) );	
-	}
-
-	// construct the tridiagonal matrix T
-	for (var i = 0; i < m; i++) {
-		T.set(i,i, a[i+1]);
-		if ( i < m - 1 ) {
-			T.set(i+1, i, b[i+2]);
-			T.set(i, i+1, b[i+2]);
-		}
-	}
-
-	return T;
-}
-
-
-/**
- *
- * Multiple Relatively Robust Representations Algorithm
- * --
- * http://web.eecs.utk.edu/~dongarra/etemplates/node93.html
+ *		- http://arxiv.org/abs/1007.5510
  *
  */
-function mrrr ( M ) {
 
-}
 
-// http://zoro.ee.ncku.edu.tw/na/res/10-QR_factorization.pdf
-// http://stats.stackexchange.com/questions/20643/finding-matrix-eigenvectors-using-qr-decomposition
-function qr ( A ) {
+(function ( mod ) {
 
-}
+	if ( typeof module === "object" && typeof module.exports === "object" ) // CommonJS, Node
+		module.exports = mod(require('underscore'),require( __dirname + "/../linalg/linalg" ));
+	else if (typeof define == "function" && define.amd) // AMD
+		return define(["underscore", __dirname + "/../linalg/linalg"], mod);
+	else // normal browser env
+		this.svd = mod( _, linalg )();
 
-function qrFactorize ( A ) {
-	// [[3,2,0],[2,-5,-1],[0,-1,4]]
+})(function ( _, linalg ) {
 	
-}
+	// "use strict"; // TODO benchmarks to see whether strict is actually faster
+	"use asm";
+	
 
+	// computational accuracy
+	var EPSILON = 1e-7;
 
-function eigensolveQr ( A, n ) {
+	/**
+	 * Lanczos Algorithm
+	 * ---
+	 * 
+	 * for an mxn matrix A, returns a symmetric mxm tridiagonalized matrix T with the
+	 * same eigenvalues as A.
+	 *
+	 * ---
+	 * see 
+	 *		- http://en.wikipedia.org/wiki/Lanczos_iteration
+	 *		- http://en.wikipedia.org/wiki/Singular_value_decomposition
+	 *		- http://bickson.blogspot.com/2011/10/lanczos-algorithm-for-svd-singule-value.html
+	 *
+	 * :param A - a square or rectangular matrix
+	 * :param m - the number of iterations; the number size of the tridiagonalized matrix T
+	 * :param reortho - boolean value for whether or not to run reorthogonalization (defaults to true)
+	 * :return - a symmetric tridiagonalized matrix
+	 */
+	function lanczos ( A, m, reortho ) {
 
+		// var v = [ linalg.zeros(A.cols), linalg.rand(A.cols)],
+		var v = [ linalg.zeros(A.cols), new linalg.Matrix( linalg.ndarray(A.cols,0.5) )],
+			T = linalg.zeros([m+1,m+1]),
+			At = A.clone().T();
 
+		// start with norm(v[1]) = 1
+		v[1] = v[1].div( v[1].norm() );
 
-	for (var i = 0; i < n; i++) {
-		
-	};
-}
+		for ( var b = [0,0], w, a = [0], i = 1; i < m + 2; i++ ) {
+			w = At.mul( A.mul(v[i]) ).sub( v[i-1].mul(b[i]) );
+			a[i] = w.dot(v[i]);
+			w = w.sub( v[i].mul(a[i]) );
 
-
-/**
- * Find the eigenvalues of a tridiagonalized matrix by bisection
- * --
- * see:
- * 		- https://people.fh-landshut.de/~maurer/numeth/node91.html#GBNDMIN
- * 		- http://www.enggjournals.com/ijcse/doc/IJCSE11-03-12-060.pdf
- *		- http://www.maths.ed.ac.uk/~aar/papers/bamawi.pdf
- *
- */
-function bisectTridiagonal ( a, b, m ) {
-
-	console.log(a)
-	console.log(b)
-
-	// estimate initial upper and lower limits of the eigenspetrum by Gersgorin bounds
-	var umin = a.reduce(function ( prev, cur, i ) {
-		var tmp = a[i]-Math.abs(b[i])-Math.abs( b[i+1] || 0);
-		return i ? Math.min(tmp,prev) : tmp
-	},0);
-
-	var umax = a.reduce(function ( prev, cur, i ) {
-		var tmp = a[i]+Math.abs(b[i])+Math.abs( b[i+1] || 0);
-		return i ? Math.max(tmp,prev) : tmp
-	},0);
-
-	var numEig = 1;
-
-	// numerical tolerance 10e-7
-
-	do {
-		var epsilon = 1e-7 * Math.max( Math.abs(umin), Math.abs(umax) ),
-			s = ( umin + umax ) * 0.5, 
-			d = a[0] - s, 
-			lneg = 0;
-
-		// triangular decomposition
-		for (var i = 1; i < m; i++) {
-			lneg += d < 0 ? 1 : 0;
-			// lneg += (( b[i] / ( d || epsilon )) < 0) ? 1 : 0;
-			d = a[i] - s - (b[i]*b[i])/( d || epsilon );
+			// re-orthogonalize at each iteration (if specified)
+			if ( reortho || _.isUndefined(reortho) ) {
+				for (var tmpa, j = 1; j < i-1; j++) {
+					tmpa = w.dot(v[j]);
+					w = w.sub( v[j].mul(tmpa) );
+				};
+			}
+			
+			b[i+1] = w.norm();
+			v[i+1] = w.div(b[i+1]);
 		}
 
-		console.log(umin,s,umax,lneg)
 
-		// set the new bounds
-		if ( lneg < numEig ) umin = s;
-		else umax = s;
+		// construct the tridiagonal matrix T
+		for (var i = 0; i < m + 1; i++) {
+			T.set(i,i, a[i+1]);
+			if ( i < m ) {
+				T.set(i+1, i, b[i+2]);
+				T.set(i, i+1, b[i+2]);
+			}
+		}
+		return T;
+	}
 
-	} while ( Math.abs( umax - umin ) > epsilon )
+	/**
+	 * Use QR decomposition/factorization to solve for the eigenvalues of a
+	 * symmetrical tridiagonalized matrix A.
+	 *
+	 * see:
+	 * 		- http://zoro.ee.ncku.edu.tw/na/res/10-QR_factorization.pdf
+	 * 		- http://stats.stackexchange.com/questions/20643/finding-matrix-eigenvectors-using-qr-decomposition
+	 *
+	 * :param A - a symmetric tridiagonalized Matrix
+	 */
+	function eigensolveQr ( A ) {
 
-	// return s
-}
+		// extract tridiagonal component vectors 'a' (center diagonal) and 'b' (bottom diagonal)
+		var a = new linalg.ndarray([A.rows,0]).map(function ( val, i ) {
+			return A.get(i,i);
+		});
 
-module.exports = {
-	svd : svd
-}
+		var b = new linalg.ndarray([A.rows-1,0]).map(function ( val, i ) {
+			return A.get(i+1,i);
+		});
+
+		var i = 0;
+
+		do {
+
+			for ( var t = b[0], r, c = [], s = [], j = 0; j < A.cols - 1; j++ ) {
+				r = Math.sqrt(a[j]*a[j]+t*t);
+				c.push( a[j]/r );
+				s.push( t/r );
+				a[j] = r;
+				t = b[j];
+				b[j] = t*c[j] + a[j+1]*s[j];
+				a[j+1] = -t*s[j] + a[j+1]*c[j];
+				if ( j < A.cols - 2 ) {
+					t = b[j+1];
+					b[j+1] = t*c[j];
+				}
+			};
+
+			for (var j = 0; j < A.cols - 1; j++) {
+				a[j] = a[j]*c[j] + b[j]*s[j];
+				b[j] = a[j+1]*s[j];
+				a[j+1] = a[j+1]*c[j];	
+			};
+
+			i++;
+
+		} while ( b[0] > EPSILON )
+
+		return a;
+	}
+
+
+
+	/**
+	 * return a function that computes the SVD by creating a tridiagonalized 
+	 * matrix T (from A), and solves for it's eigenvalues
+	 *
+	 */
+	return function ( A ) {
+		var T = lanczos( A, 2 );
+		return eigensolveQr( T );
+	};
+});

@@ -7,6 +7,7 @@ function SelfOrganizingMap () {
 
 };
 
+
 SelfOrganizingMap.prototype = {
 
 };

@@ -1,24 +1,33 @@
-var svd = require( __dirname + "/../learning/svd");
-var Matrix = require( __dirname + "/../linalg/linalg").Matrix;
+var svd = require( __dirname + "/../learning/svd"),
+	linalg = require( __dirname + "/../linalg/linalg"),
+	io = require( __dirname + "/../io" ),
+	nets = require( __dirname + "/../learning/neural-nets/nets"),
+	trainers = require( __dirname + "/../learning/neural-nets/trainers");
 
 
-// var a = [[1,2,3,4,5,6,7,8,9,10,11,12,13,111,11,11],
-// 		[1,2,3,4,5,6,7,8,9,10,11,12,13,111,11,11],
-// 		[1,2,3,4,5,6,7,8,9,10,11,12,13,111,11,11],
-// 		[1,2,3,4,5,6,7,8,9,10,11,12,13,111,11,11],
-// 		[1,2,3,4,5,6,7,8,9,10,11,12,13,111,11,11],
-// 		[1,2,3,4,5,6,7,8,9,10,11,12,13,111,11,11],
-// 		[1,2,3,4,5,6,7,8,9,10,11,12,13,111,11,11],
-// 		[1,2,3,4,5,6,7,8,9,10,11,12,13,111,11,11]]
+var txt = io.txt( 'testfiles/NEF1990 Baseline 05_20_2014 0.5-20 JB.txt');
 
-// var a = [[12,6,4],[6,167,24],[4,24,-41]];
+txt.read( function ( data ) {
+	var csv = io.CSV( data, 2, 2 );
 
-var a = [[-1,-2,1,2],
-		[-2,3,0,-2],
-		[1,0,2,1],
-		[2,-2,1,4]]
+	// the first 10 samples
+	var samples = csv.data.slice(0,10);
 
-var A = new Matrix(a);
+	// convert the file text data into numbers
+	samples = samples.map( function ( row ) {
+		return row.map( Number );
+	});
 
-svd.svd(A,8)
+	// perform singular value decomposition
+	var singularValues = svd( new linalg.Matrix(samples) );
 
+	// create a neural net
+	var classifier = new nets.Classifier(["S","R","W","X"]);
+
+	console.log(classifier)
+
+
+	// trainers.SelfOrganizingMap()
+
+
+});
