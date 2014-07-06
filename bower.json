@@ -1,0 +1,23 @@
+{
+  "name": "blueprint.js",
+  "version": "0.0.0",
+  "authors": [
+    "Jon Brennecke <jpbrennecke@gmail.com>"
+  ],
+  "description": "machine learning",
+  "license": "MIT",
+  "private": true,
+  "dependencies" : {
+    "requirejs" : "*",
+    "threejs" : "*",
+    "jquery" : "*",
+    "jqueryui" : "*"
+  },
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}

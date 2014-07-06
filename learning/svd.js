@@ -150,9 +150,12 @@
 	 * return a function that computes the SVD by creating a tridiagonalized 
 	 * matrix T (from A), and solves for it's eigenvalues
 	 *
+	 * :param A - a matrix of values
+	 * :param n - number of Lanczos iterations and number of singular values to return
+	 *		defaults to the number of columns in A if n is not provided.
 	 */
-	return function ( A ) {
-		var T = lanczos( A, 2 );
+	return function ( A, n ) {
+		var T = lanczos( A, n - 1 || A.cols - 1 );
 		return eigensolveQr( T );
 	};
 });

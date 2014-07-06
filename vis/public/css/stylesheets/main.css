@@ -1,0 +1,11 @@
+/* line 2, ../sass/main.sass */
+body {
+  margin: 0;
+}
+
+/* line 5, ../sass/main.sass */
+#canvas-wrap {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+}

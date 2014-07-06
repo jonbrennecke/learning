@@ -1,4 +1,4 @@
 blueprint.js
 ======
 
-a 3D library that runs purely in software (no hardware acceleration)
+machine learning and neural networks in javascript.
