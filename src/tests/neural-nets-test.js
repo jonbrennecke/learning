@@ -10,10 +10,30 @@ edf.getChannel(chan).then( function ( info ) {
 	
 	var fs = +info.header.physMax[chan];
 	
+	// the signal is split into overlapping blocks
+	// this is important so that a short, transient event can be correctly captured
+	var	dsp = require( __dirname + '/../lib/dsp.js/dsp' ),
+		hamming = new dsp.WindowFunction( dsp.DSP.HAMMING ),
+		windowData = hamming.process( info.data ),
+		
+		// DSP optimizes FFTs when blocksize is a magnitude of 2
+		blocksize = 256,
+
+		// create a neural network classifier
+		classifier = new nets.Classifier(["S","R","W","X"], { nInputs : blocksize });
+
+	// loop
+	for (var i = 0; i+blocksize < windowData.length; i+=blocksize) {
+		var	block = windowData.slice(i, i+blocksize);
+			fft = new dsp.FFT( blocksize, fs );
+
+		fft.forward( block );
+		var state = classifier.classify( fft.spectrum );
+		console.log(state)
+	}
 
 
-
-});
+}).done();
 
 
 

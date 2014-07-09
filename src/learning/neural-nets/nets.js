@@ -24,40 +24,73 @@
 	  return - Math.log(x) / Math.LN10;
 	})();
 
+	/**
+	 *
+	 * default propogation function
+	 * returns the dot product of the vectors 'w' and 'i'
+	 *	 
+	 * :param w - weight value
+	 * :param i - input value
+	 */
+	dotProduct = function ( a, b ) {
+		return a.reduce(function ( p, c, i ) {
+			return p + c * b[i]
+		},0);
+	}
+
 
 	/**
 	 *
-	 * a set of commonly used activation functions
-	 *
+	 * a set of commonly used activation functions (dxdy) and their first derivatives (dydx)
+	 * 
+	 * Functions:
+	 * 		- sigmoid, see http://en.wikipedia.org/wiki/Sigmoid_function
+	 *		- softplus, see http://en.wikipedia.org/wiki/Rectifier_(neural_networks)
+	 *		- hyperbolic tangent, see http://en.wikipedia.org/wiki/Hyperbolic_tangent
 	 */
 	var act = {
-
-		// see http://en.wikipedia.org/wiki/Sigmoid_function
-		sigmoid : function ( x ) {
-			return 1 / ( 1 + Math.exp(-x) );
+		sigmoid : {
+			dxdy : function ( x ) {
+				return 1 / ( 1 + Math.exp(-x) );
+			},
+			dydx : function ( y ) {
+				return y * (1 - y);
+			},
 		},
 
-		// see http://en.wikipedia.org/wiki/Rectifier_(neural_networks)
-		softplus : function ( x ) {
-			return Math.log10( 1 + Math.exp(x) );
+		softplus : {
+			dxdy : function ( x ) {
+				return Math.log10( 1 + Math.exp(x) );
+			},
+			dydx : function ( y ) {
+				return 1 / (1 + Math.exp(-y));
+			},
 		},
 
-		// see http://en.wikipedia.org/wiki/Hyperbolic_tangent
-		tanh : function ( x ) {
-			return ( 1 - Math.exp( -2 * x ) ) / ( 1 + Math.exp( -2 * x ) );
+		tanh : {
+			dxdy : function ( x ) {
+				return ( 1 - Math.exp( -2 * x ) ) / ( 1 + Math.exp( -2 * x ) );
+			},			
+			// d(tanh)/dy = sech^2(y)
+			dydx : function ( y ) {
+				return Math.pow( (2 * Math.exp(-y)) / ( 1 + Math.exp(-2 * y)), 2);
+			}
 		}
 	}
 
 	/**
 	 *
-	 * Neural Network
+	 * Neural Network Controller
 	 * ---
+	 * by default, the NeuralNetwork class creates a multilayer feed-forward back-propogating network
+	 *
 	 *
 	 * see 	- http://en.wikipedia.org/wiki/Neural_network
 	 * 		- http://en.wikipedia.org/wiki/Deep_learning#Deep_neural_networks
 	 *		- http://stats.stackexchange.com/questions/181/how-to-choose-the-number-of-hidden-layers-and-nodes-in-a-feedforward-neural-netw
 	 *		- http://www.faqs.org/faqs/ai-faq/neural-nets/part1/preamble.html
 	 *
+	 * ---
 	 * :param options - object with the following fields:
 	 * 		:field inputs - the dimension of the input layer
 	 * 		:field outputs - the dimension of the output layer
@@ -73,7 +106,7 @@
 	 * 		:field activation - (optional) activation function (defaults to )
 	 *
 	 *
-	 * by default, the number of hidden layers equals one; and the number of neurons in that layer is the 
+	 * NOTE: by default, the number of hidden layers equals one; and the number of neurons in that layer is the 
 	 * floor of the mean of the neurons in the input and output layers.
 	 */
 
@@ -82,27 +115,36 @@
 		// initialize optional parameters
 		var defaults = {
 			rate : 0.1,
-			hiddenLayers : 0,
+			hiddenLayers : 1,
 			init : Math.random,
 			activate : act.tanh,
-			propogate : this.__dotProduct,
-			cost : this.__dist,
+			propogate : dotProduct,
 			activatedValue : 1,
 			deactivatedValue : -1,
 			threshold : 0,
-			trainer : new SelfOrganizingMap( this ),
+			trainer : Trainer,
 			biasTerm : true,
 			outputLayer : Layer
 		}
 		this.param = _.defaults( options, defaults );
 
+		// insantiate the trainer
+		this.trainer = new ( this.param.trainer )({ 
+			network : this, 
+			cost : this.param.cost,
+			rate : this.param.rate,
+			activate : this.param.activate, 
+		});
+
 		// initialize the layers
-		this.layers = [ new Layer( 
-			this.param.nInputs, 
-			this.param.nInputs,
-			this.param.init,
-			this.param.activate,
-			this.param.propogate )];
+		this.layers = [ new Layer({ 
+			nWeights : this.param.nInputs, 
+			nNeurons : this.param.nInputs,
+			init : this.param.init,
+			activate : this.param.activate.dxdy,
+			propogate : this.param.propogate,
+			number : 0 
+		})];
 
 		// hidden layers
 		// ---
@@ -111,20 +153,23 @@
 		var hiddenSize = this.param.hiddenSize || (this.param.nInputs + this.param.nOutputs)/2 | 0;
 
 		for (var i = 0; i < this.param.hiddenLayers; i++) {
-			this.layers.push( new Layer( 
-				i == 0 ? this.param.nInputs : hiddenSize,
-				this.param.hiddenSize ? this.param.hiddenSize : (this.param.nInputs + this.param.nOutputs)/2 | 0, 
-				this.param.init,
-				this.param.activate,
-				this.param.propogate ));
+			this.layers.push( new Layer({ 
+				nWeights : i == 0 ? this.param.nInputs : hiddenSize,
+				nNeurons : this.param.hiddenSize ? this.param.hiddenSize : (this.param.nInputs + this.param.nOutputs)/2 | 0, 
+				init : this.param.init,
+				activate : this.param.activate.dxdy,
+				propogate : this.param.propogate,
+				number : i + 1 
+			}));
 		};
 
-		this.layers.push( new ( this.param.outputLayer )( 
-			hiddenSize || this.param.nInputs, 
-			this.param.nOutputs,
-			this.param.init,
-			this.param.activate,
-			this.param.propogate ));
+		this.layers.push( new ( this.param.outputLayer )({ 
+			nWeights : hiddenSize || this.param.nInputs, 
+			nNeurons : this.param.nOutputs,
+			init : this.param.init,
+			activate : this.param.activate.dxdy,
+			propogate : this.param.propogate,
+			number : this.param.hiddenLayers + 1 }));
 	};
 
 	NeuralNetwork.prototype = {
@@ -134,50 +179,23 @@
 		 * ---
 		 * http://en.wikipedia.org/wiki/Feedforward_neural_network
 		 */
-		feedForward : function ( input ) {
+		feedForward : function ( input, training ) {
 			return this.layers.reduce(function ( prev, cur, i ) {
 
 				// the result (as a vector) from the previous layer is passed to each 'neuron' node 
 				// in the next layer
-				return cur.broadcast( prev ); 
+				return cur.broadcast( prev, true ); 
 			}, input );
 		},
 
-		backPropogate : function ( ) {
-
-		},
-
-		gradDescent : function () {
-
-		},
-
 		/**
 		 *
-		 * default propogation function
-		 * returns the dot product of the vectors 'w' and 'i'
-		 *	 
-		 * :param w - weight value
-		 * :param i - input value
-		 */
-		__dotProduct : function ( w, i ) {
-			return w.reduce(function ( p, c, j ) {
-				return p + c * i[j]
-			},0);
-		},
-
-		/**
-		 * the default 'cost' function is the n-dimensional Euclidean distance between neurons
-		 *
-		 * :param a - first weight vector
-		 * :param b - second weight vector
+		 * call the training method of the trainer object
 		 *
 		 */
-		__dist : function ( a, b ) {
-			return Math.sqrt(a.reduce(function ( prev, cur, i ) {
-				return prev + Math.pow(cur - b[i], 2);
-			},0));
+		train : function ( input, expect ) {
+			return this.trainer.train(input,expect);
 		}
-
 	};
 
 
@@ -193,12 +211,10 @@
 	 * :param act - activation function
 	 * :param prop - propogation function
 	 */
-	function Layer ( w, n, init, act, prop ) {
-		this.nWeights = w;
-		this.nNeurons = n;
-		this.init = init;
-		this.activate = act;
-		this.propogate = prop;
+	function Layer ( param ) {
+		_.extend(this, _.pick( param, ["nWeights","nNeurons","init","activate","propogate","number"]));
+
+		this.output = new Array( param.nNeurons );
 
 		// initialize the weights by constructing an n x w matrix of values derived from 
 		// calling 'init' repeatedly
@@ -208,11 +224,11 @@
 				a[i] = [];
 				(function ( b, j ) { 
 					while (j--)
-						b[j] = init(j);
-				})(a[i],w);
+						b[j] = param.init(j);
+				})(a[i],param.nWeights);
 			}
 			return a
-		})([],n);
+		})([],param.nNeurons);
 	}; 
 
 	Layer.prototype = {
@@ -223,35 +239,143 @@
 		 * In a basic layer, the propogation function (the dot product by default) returns
 		 * a scalar value which is passed to the activation function.
 		 * Other Layer classes can subclass Layer and overwrite the broadcast function
-		 * 
+		 * ---
 		 * :param input - input vector
+		 * :param training - boolean value, whether or not the network is currently being trained
 		 * :return - an array containing the output (scalar value) of each activated nueron in the layer
 		 */ 
-		broadcast : function ( input ) {
-			return this.weights.map( function ( w ) {
-				return this.activate( this.propogate( w, input ) );
+		broadcast : function ( input, training ) {
+			// if training is active, save the input array
+			if ( training ) 
+				this.input = input;
+
+			return this.weights.map( function ( w, i ) {
+				var output = this.activate( this.propogate( w, input ) );
+				
+				// if training is active, save the output values
+				if ( training )
+					this.output[i] = output;
+				
+				return output;
 			}.bind(this));
 		}
 
 	};
 
 	/**
-	 *
-	 *
-	 *
+	 * Neural Network Trainer
+	 * ---
+	 * see
+	 *		- http://en.wikipedia.org/wiki/Backpropagation
 	 */
-	function SelfOrganizingMap ( network ) {
-		this.network = network;0
+	function Trainer ( param ) {
+		this.network = param.network;
+		this.cost = param.cost || this.dist;
+		this.rate = param.rate;
+		this.activate = param.activate;
 	};
 
 
-	SelfOrganizingMap.prototype = {
+	Trainer.prototype = {
+
+		/**
+		 * Gradient Descent
+		 * ---
+		 * compute the gradient descent vector for each weight in the neuron's weight vector 
+		 * ---
+		 * :param weights - an array representing a neuron's weight vector
+		 * :param input - input to the layer
+		 * :param expect - expected output of the layer
+		 * :param hidden - boolean value designating whether the layer is the output layer
+		 *		
+		 * :return - the weight vector modified by the deltas for each weight
+		 */
+		gradDescent : function ( weights, input, expected, hidden ) {
+			return weights.map( function ( w, i ) {
+				this.rate * (input[i] - expected[i]) * this.act.dydx(input[i]) * w
+			});
+		},
+
+		/**
+		 * Train the network by 'back propogation'
+		 * ---
+		 * see
+		 *		- http://en.wikipedia.org/wiki/Backpropagation
+		 * ---
+		 * :param expected - expected result of 'feedForward'
+		 *
+		 */
+		backPropogate : function ( expected ) {
+
+			// the output layer
+			var out = this.network.layers[ this.network.layers.length - 1 ],
+				act = this.activate,
+				rate = this.rate;
+
+			// the output layer is processed differently since the output layer
+			// can be directly compared to the expected answer,
+			var deltas = out.weights.map( function ( neuron, i ) {
+				return neuron.map( function ( w, j ) {
+					var delta = rate * (out.output[i] - expected) * act.dydx(out.output[i]) * out.input[j];
+					out.weights[i][j] -= delta; 
+					return delta;
+				});
+			});
+
+			// loop backwards through the other layers
+			for (var layer, sum, i = this.network.layers.length - 2; i >= 0; i--) {
+
+				layer = this.network.layers[i], next = this.network.layers[i+1];
+
+				// compute the deltas of the 
+				deltas = layer.weights.map( function ( neuron, k ) {
+
+					console.log(k)
+
+					// dot product of the deltas and the weights of the succeeding layer
+					sum = dotProduct( next.weights[k], deltas[k] );
+
+					return neuron.map( function ( w, j ) {
+						var delta = rate * sum * act.dydx(layer.output[k]) * layer.input[j];
+						layer.weights[k][j] -= delta;
+						return delta;
+					});
+				});
+			}
+		},
+
+		/**
+		 * training by back propogation and gradient descent
+		 * ---
+		 * :param input - input vector
+		 * :param expect - expected answer
+		 */
+		train : function ( input, expected ) {
+			// feed forward with the second param 'training', set to true
+			// to save the input values
+			var predict = this.network.feedForward( input, true );
+			this.backPropogate( input, expected )
+		},
+
+		/**
+		 * the default 'cost' function is the n-dimensional Euclidean distance between neurons
+		 *
+		 * :param a - first weight vector
+		 * :param b - second weight vector
+		 *
+		 */
+		dist : function ( a, b ) {
+			return Math.sqrt(a.reduce(function ( prev, cur, i ) {
+				return prev + Math.pow(cur - b[i], 2);
+			},0));
+		}
 
 	};
+
 
 
 	/**
-	 * a Probabalistic Neural Network for classifying
+	 * a Probabalistic Neural Network for classification purposes
 	 * 
 	 * inherits from the NeuralNetwork base class
 	 */
@@ -286,7 +410,7 @@
 	};
 
 	/** 
-	 * Output layer for Classifier neural networks
+	 * Output layer for Classifier networks
 	 *
 	 * inherits from Layer 
 	 *
@@ -328,7 +452,7 @@
 		NeuralNetwork : NeuralNetwork,
 		Classifier : Classifier,
 		Layer : Layer,
-		SelfOrganizingMap : SelfOrganizingMap,
+		Trainer : Trainer,
 		act : act
 	}
 });
