@@ -21,7 +21,7 @@
 	// "use strict"; // TODO benchmarks to see whether strict is actually faster
 	// "use asm";
 
-	function GPUPlot () {
+	function WebGLPlot () {
 
 		this.app = express();
 		this.app.set('views', __dirname + '/public/templates/' );
@@ -36,8 +36,10 @@
 
 	};
 
-	GPUPlot.prototype = {
+	WebGLPlot.prototype = {
+		plot : function ( data ) {
 
+		}
 	};
 
 
@@ -57,5 +59,5 @@
 
 	// }.bind(this));
 
-	return GPUPlot
+	return new WebGLPlot
 });

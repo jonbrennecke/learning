@@ -9,3 +9,15 @@ body {
   height: 100%;
   width: 100%;
 }
+/* line 10, ../sass/main.sass */
+#canvas-wrap.hide-cursor {
+  cursor: none;
+}
+
+/* line 13, ../sass/main.sass */
+#cursor-canvas {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  z-index: 2;
+}

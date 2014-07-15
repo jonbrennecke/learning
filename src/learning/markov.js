@@ -11,6 +11,8 @@ var linalg = require( __dirname + "/../linalg/linalg" );
  *
  * Probability distribution function for Continuous Hidden Markov Models
  *
+ * TODO
+ *
  * :param callback - function to return the probability 
  */
 function PDF ( callback ) {
